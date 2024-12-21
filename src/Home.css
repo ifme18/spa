@@ -1,0 +1,181 @@
+/* General Styles */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f9f9f9;
+  }
+  
+  .booking {
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .booking h1 {
+    text-align: center;
+    color: #333;
+  }
+  
+  .booking h3 {
+    margin-top: 20px;
+    color: #555;
+  }
+  
+  /* Map Styles */
+  .booking .leaflet-container {
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    margin-top: 10px;
+  }
+  
+  /* Input Styles */
+  .booking input[type="text"],
+  .booking input[type="tel"] {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 16px;
+  }
+  
+  /* Service Button Styles */
+  .booking button {
+    padding: 10px 15px;
+    margin: 10px 5px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: #007bff;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+  }
+  
+  .booking button:hover {
+    background-color: #0056b3;
+    transform: scale(1.05);
+  }
+  
+  .booking button.selected {
+    background-color: #28a745;
+    border-color: #218838;
+  }
+  
+  /* Confirm Button Styles */
+  .booking button:last-of-type {
+    width: 100%;
+    background-color: #28a745;
+    border-color: #218838;
+    margin-top: 20px;
+  }
+  
+  .booking button:last-of-type:hover {
+    background-color: #218838;
+  }
+  
+  /* Responsive Design */
+  @media (max-width: 600px) {
+    .booking {
+      padding: 15px;
+    }
+  
+    .booking button {
+      width: 100%;
+      margin: 10px 0;
+    }
+  }
+  
+  /* Home Component Styles */
+  .home {
+    text-align: center;
+    padding: 20px;
+  }
+  
+  .hero {
+    background-color: #007bff;
+    color: white;
+    padding: 40px 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+  }
+  
+  .hero h1 {
+    font-size: 2.5rem;
+    margin: 0;
+  }
+  
+  .hero p {
+    margin: 10px 0 20px;
+    font-size: 1.2rem;
+  }
+  
+  .cta-buttons .btn {
+    margin: 0 10px;
+    padding: 10px 20px;
+    font-size: 1rem;
+    border: none;
+    border-radius: 4px;
+    background-color: #28a745;
+    color: white;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+  }
+  
+  .cta-buttons .btn:hover {
+    background-color: #218838;
+    transform: scale(1.05);
+  }
+  
+  .services {
+    padding: 20px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .services h2 {
+    font-size: 1.8rem;
+    margin-bottom: 20px;
+  }
+  
+  .service-cards {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+  }
+  
+  .card {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    text-align: left;
+    flex: 1;
+    max-width: 300px;
+  }
+  
+  .card h3 {
+    margin: 0 0 10px;
+    color: #333;
+  }
+  
+  .card p {
+    margin: 0;
+    color: #555;
+    font-size: 0.9rem;
+  }
+  
+  @media (max-width: 600px) {
+    .service-cards {
+      flex-direction: column;
+      gap: 10px;
+    }
+  }
+  

@@ -1,0 +1,199 @@
+/* Google Fonts import for modern typography */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+
+:root {
+  /* Color Palette */
+  --primary-color: #3498db;
+  --secondary-color: #2ecc71;
+  --background-color: #f4f6f7;
+  --text-color: #2c3e50;
+  --border-color: #e0e0e0;
+  --white: #ffffff;
+}
+
+/* General Reset */
+body {
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  background-color: var(--background-color);
+  color: var(--text-color);
+}
+
+/* Background Container */
+.background-container {
+  max-width: 1200px;
+  margin: 30px auto; /* Center the container on the page */
+  border-radius: 15px;
+  overflow: hidden; /* Prevent content overflow */
+  background: url('https://i.pinimg.com/736x/46/d7/6f/46d76f4192ae5fdca45734f8d816746c.jpg') no-repeat center center;
+  background-size: cover; /* Ensure the image scales properly */
+  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.2);
+  position: relative;
+}
+
+/* Booking Content */
+.booking {
+  max-width: 800px;
+  margin: 50px auto;
+  padding: 20px;
+  background-color: rgba(255, 255, 255, 0.9); /* Slight transparency */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  backdrop-filter: blur(5px);
+}
+
+.booking h1 {
+  text-align: center;
+  color: var(--primary-color);
+  margin-bottom: 30px;
+  font-weight: 700;
+  font-size: 2.5rem;
+}
+
+.booking h3 {
+  color: var(--text-color);
+  border-bottom: 2px solid var(--primary-color);
+  padding-bottom: 10px;
+  margin-bottom: 20px;
+  font-weight: 600;
+}
+
+/* Form Inputs */
+input {
+  width: 100%;
+  padding: 12px 15px;
+  margin-bottom: 15px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+/* Services Section */
+.service-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  border-bottom: 1px solid var(--border-color);
+  transition: background-color 0.3s ease;
+}
+
+.service-item:hover {
+  background-color: rgba(52, 152, 219, 0.05);
+}
+
+.quantity-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.quantity-controls button {
+  width: 30px;
+  height: 30px;
+  background-color: var(--primary-color);
+  color: var(--white);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.quantity-controls button:hover {
+  background-color: #2980b9;
+}
+
+.quantity-controls span {
+  font-weight: 600;
+  min-width: 20px;
+  text-align: center;
+}
+
+/* Cart Section */
+.cart-section {
+  margin-top: 30px;
+  background-color: var(--background-color);
+  border-radius: 8px;
+  padding: 15px;
+}
+
+.cart-section button {
+  width: 100%;
+  padding: 12px;
+  background-color: var(--secondary-color);
+  color: var(--white);
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.cart-section button:hover {
+  background-color: #27ae60;
+}
+
+.cart {
+  margin-top: 20px;
+}
+
+.cart ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.cart li {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.cart h4 {
+  text-align: right;
+  color: var(--primary-color);
+  font-weight: 700;
+}
+
+/* Confirm Booking Button */
+button[onClick="handleSubmit()"] {
+  width: 100%;
+  padding: 15px;
+  background-color: var(--primary-color);
+  color: var(--white);
+  border: none;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-top: 20px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.1s ease;
+}
+
+button[onClick="handleSubmit()"]:hover {
+  background-color: #2980b9;
+  transform: translateY(-2px);
+}
+
+/* Responsive Design */
+@media (max-width: 600px) {
+  .booking {
+    padding: 10px;
+  }
+
+  .service-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+}
+
+
+  

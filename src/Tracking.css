@@ -1,0 +1,95 @@
+.tracking {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #f9f9f9;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.tracking h1 {
+    color: #333;
+    text-align: center;
+    margin-bottom: 15px;
+    font-size: 24px;
+}
+
+.tracking p {
+    color: #666;
+    text-align: center;
+    margin-bottom: 20px;
+    line-height: 1.6;
+}
+
+.tracking-map-container {
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.stages-container {
+    background-color: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 15px;
+    margin-top: 15px;
+}
+
+.stages-container h4 {
+    color: #333;
+    margin-bottom: 10px;
+    border-bottom: 2px solid #f0f0f0;
+    padding-bottom: 5px;
+}
+
+.stage-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+    padding: 10px;
+    background-color: #f9f9f9;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+
+.stage-item:hover {
+    background-color: #f0f0f0;
+}
+
+.stage-status-dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    margin-right: 10px;
+    display: inline-block;
+}
+
+.stage-status-completed {
+    background-color: #4CAF50;
+    opacity: 1;
+}
+
+.stage-status-pending {
+    background-color: #FFC107;
+    opacity: 0.6;
+}
+
+.stage-timestamp {
+    margin-left: auto;
+    font-size: 12px;
+    color: #666;
+}
+
+@media (max-width: 600px) {
+    .tracking {
+        padding: 10px;
+    }
+
+    .tracking h1 {
+        font-size: 20px;
+    }
+
+    .stages-container {
+        padding: 10px;
+    }
+}
