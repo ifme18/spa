@@ -4,7 +4,6 @@ import { collection, addDoc, query, where, getDocs } from 'firebase/firestore';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { ShoppingCart } from 'lucide-react';
 import { auth, db } from './Firebase';
-import './Booking.css';
 
 const servicesList = [
   { name: 'Normal Car Wash', price: 300 },
@@ -19,6 +18,10 @@ const Booking = () => {
   const [form, setForm] = useState({
     address: '',
     phone: '',
+    houseNumber: '',
+    addressNumber: '',
+    street: '',
+    estate: '',
     cart: {},
   });
   const [showCart, setShowCart] = useState(false);
@@ -76,23 +79,42 @@ const Booking = () => {
       return;
     }
 
-    if (!location || !form.address || !form.phone || Object.keys(form.cart).length === 0) {
-      alert('Please complete all fields and select services.');
+    if (!location || !form.phone || Object.keys(form.cart).length === 0) {
+      alert('Please select a location, provide a phone number, and select services.');
       return;
     }
+
+    // Combine all location details into a structured format
+    const locationDetails = {
+      coordinates: location,
+      mainAddress: form.address,
+      details: {
+        houseNumber: form.houseNumber,
+        addressNumber: form.addressNumber,
+        street: form.street,
+        estate: form.estate,
+      }
+    };
 
     try {
       await addDoc(collection(db, 'bookings'), {
         userId: user.uid,
-        location,
-        address: form.address,
+        location: locationDetails,
         phone: form.phone,
         cart: form.cart,
         total: calculateTotal(),
         createdAt: new Date(),
       });
       alert('Booking confirmed!');
-      setForm({ address: '', phone: '', cart: {} });
+      setForm({
+        address: '',
+        phone: '',
+        houseNumber: '',
+        addressNumber: '',
+        street: '',
+        estate: '',
+        cart: {},
+      });
       setLocation(null);
       fetchUserBookings(user);
     } catch (error) {
@@ -134,7 +156,7 @@ const Booking = () => {
   }, []);
 
   return (
-    <div className="booking relative">
+    <div className="booking relative p-4">
       {/* Fixed Cart Icon */}
       <div className="fixed bottom-4 right-4 z-50">
         <button 
@@ -150,11 +172,11 @@ const Booking = () => {
         </button>
       </div>
 
-      <h1>Book a Cleaning Service</h1>
+      <h1 className="text-2xl font-bold mb-6">Book a Cleaning Service</h1>
 
       {/* Map Section */}
-      <div>
-        <h3>Select Location</h3>
+      <div className="mb-6">
+        <h3 className="text-lg font-semibold mb-2">Select Location</h3>
         <LoadScript googleMapsApiKey="YOUR_API_KEY">
           <GoogleMap
             mapContainerStyle={mapStyles}
@@ -167,80 +189,151 @@ const Booking = () => {
         </LoadScript>
       </div>
 
-      {/* Form Inputs */}
-      <div>
-        <h3>Enter Details</h3>
-        <input
-          type="text"
-          placeholder="Address"
-          value={form.address}
-          onChange={(e) => setForm({ ...form, address: e.target.value })}
-        />
-        <input
-          type="tel"
-          placeholder="Phone Number"
-          value={form.phone}
-          onChange={(e) => setForm({ ...form, phone: e.target.value })}
-        />
+      {/* Enhanced Location Details Form */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <h3 className="text-lg font-semibold col-span-full">Location Details</h3>
+        
+        <div className="space-y-4">
+          <input
+            type="text"
+            placeholder="Main Address"
+            value={form.address}
+            onChange={(e) => setForm({ ...form, address: e.target.value })}
+            className="w-full p-2 border rounded"
+          />
+          
+          <input
+            type="text"
+            placeholder="House Number (optional)"
+            value={form.houseNumber}
+            onChange={(e) => setForm({ ...form, houseNumber: e.target.value })}
+            className="w-full p-2 border rounded"
+          />
+
+          <input
+            type="text"
+            placeholder="Address Number (optional)"
+            value={form.addressNumber}
+            onChange={(e) => setForm({ ...form, addressNumber: e.target.value })}
+            className="w-full p-2 border rounded"
+          />
+        </div>
+
+        <div className="space-y-4">
+          <input
+            type="text"
+            placeholder="Street Name (optional)"
+            value={form.street}
+            onChange={(e) => setForm({ ...form, street: e.target.value })}
+            className="w-full p-2 border rounded"
+          />
+
+          <input
+            type="text"
+            placeholder="Estate Name (optional)"
+            value={form.estate}
+            onChange={(e) => setForm({ ...form, estate: e.target.value })}
+            className="w-full p-2 border rounded"
+          />
+
+          <input
+            type="tel"
+            placeholder="Phone Number *"
+            value={form.phone}
+            onChange={(e) => setForm({ ...form, phone: e.target.value })}
+            className="w-full p-2 border rounded"
+            required
+          />
+        </div>
       </div>
 
       {/* Services Section */}
-      <div>
-        <h3>Select Services</h3>
-        {servicesList.map((service) => (
-          <div key={service.name} className="service-item">
-            <span>{service.name} - Ksh {service.price}</span>
-            <div className="quantity-controls">
-              <button onClick={() => updateCart(service, false)}>-</button>
-              <span>{form.cart[service.name]?.quantity || 0}</span>
-              <button onClick={() => updateCart(service, true)}>+</button>
+      <div className="mb-6">
+        <h3 className="text-lg font-semibold mb-2">Select Services</h3>
+        <div className="space-y-2">
+          {servicesList.map((service) => (
+            <div key={service.name} className="flex justify-between items-center p-2 bg-gray-50 rounded">
+              <span>{service.name} - Ksh {service.price}</span>
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={() => updateCart(service, false)}
+                  className="px-2 py-1 bg-gray-200 rounded"
+                >-</button>
+                <span className="w-8 text-center">{form.cart[service.name]?.quantity || 0}</span>
+                <button 
+                  onClick={() => updateCart(service, true)}
+                  className="px-2 py-1 bg-gray-200 rounded"
+                >+</button>
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
       {/* Cart Section */}
-      <div className="cart-section" ref={cartRef}>
-        <button onClick={() => setShowCart(!showCart)}>
+      <div className="mb-6" ref={cartRef}>
+        <button 
+          onClick={() => setShowCart(!showCart)}
+          className="w-full p-2 bg-blue-500 text-white rounded mb-2"
+        >
           {showCart ? 'Hide Cart' : 'View Cart'} ({getTotalItems()} items)
         </button>
         {showCart && (
-          <div className="cart">
-            <h3>Cart</h3>
-            <ul>
+          <div className="border p-4 rounded">
+            <h3 className="font-semibold mb-2">Cart Summary</h3>
+            <ul className="space-y-2">
               {Object.entries(form.cart).map(([name, item]) => (
-                <li key={name}>
-                  {name}: {item.quantity} x Ksh {item.price} = Ksh {item.quantity * item.price}
+                <li key={name} className="flex justify-between">
+                  <span>{name}</span>
+                  <span>{item.quantity} x Ksh {item.price} = Ksh {item.quantity * item.price}</span>
                 </li>
               ))}
             </ul>
-            <h4>Total: Ksh {calculateTotal()}</h4>
+            <div className="mt-4 pt-2 border-t">
+              <h4 className="font-semibold">Total: Ksh {calculateTotal()}</h4>
+            </div>
           </div>
         )}
       </div>
 
       {/* Submit Button */}
-      <button onClick={handleSubmit}>Confirm Booking</button>
+      <button 
+        onClick={handleSubmit}
+        className="w-full p-3 bg-green-500 text-white rounded font-semibold hover:bg-green-600"
+      >
+        Confirm Booking
+      </button>
 
       {/* User Bookings Section */}
-      <div>
+      <div className="mt-8">
         {user ? (
           <div>
-            <h3>Your Bookings</h3>
+            <h3 className="text-lg font-semibold mb-4">Your Bookings</h3>
             {userBookings.length > 0 ? (
-              userBookings.map((booking) => (
-                <div key={booking.id} className="booking-item">
-                  <p><strong>Address:</strong> {booking.address}</p>
-                  <p><strong>Total:</strong> Ksh {booking.total}</p>
-                  <p><strong>Created At:</strong> {new Date(booking.createdAt.seconds * 1000).toLocaleString()}</p>
-                </div>
-              ))
+              <div className="space-y-4">
+                {userBookings.map((booking) => (
+                  <div key={booking.id} className="border p-4 rounded">
+                    <p><strong>Address:</strong> {booking.location.mainAddress}</p>
+                    {booking.location.details.houseNumber && (
+                      <p><strong>House Number:</strong> {booking.location.details.houseNumber}</p>
+                    )}
+                    {booking.location.details.street && (
+                      <p><strong>Street:</strong> {booking.location.details.street}</p>
+                    )}
+                    {booking.location.details.estate && (
+                      <p><strong>Estate:</strong> {booking.location.details.estate}</p>
+                    )}
+                    <p><strong>Total:</strong> Ksh {booking.total}</p>
+                    <p><strong>Created At:</strong> {new Date(booking.createdAt.seconds * 1000).toLocaleString()}</p>
+                  </div>
+                ))}
+              </div>
             ) : (
-              <p>No bookings found.</p>
+              <p className="text-gray-500">No bookings found.</p>
             )}
           </div>
         ) : (
-          <p>Please log in to view your bookings.</p>
+          <p className="text-gray-500">Please log in to view your bookings.</p>
         )}
       </div>
     </div>
@@ -248,3 +341,6 @@ const Booking = () => {
 };
 
 export default Booking;
+
+
+
