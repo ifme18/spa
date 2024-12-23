@@ -1,9 +1,23 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { GoogleMap, LoadScript, Marker } from '@react-google-maps/api';
-import { collection, addDoc, query, where, getDocs } from 'firebase/firestore';
+import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { addDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { ShoppingCart } from 'lucide-react';
 import { auth, db } from './Firebase';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import icon from 'leaflet/dist/images/marker-icon.png';
+import iconShadow from 'leaflet/dist/images/marker-shadow.png';
+
+// Fix for default marker icon
+let DefaultIcon = L.icon({
+    iconUrl: icon,
+    shadowUrl: iconShadow,
+    iconSize: [25, 41],
+    iconAnchor: [12, 41]
+});
+
+L.Marker.prototype.options.icon = DefaultIcon;
 
 const servicesList = [
   { name: 'Normal Car Wash', price: 300 },
@@ -12,6 +26,19 @@ const servicesList = [
   { name: 'Seat Cleaning (per seat)', price: 500 },
   { name: 'Carpet Cleaning (per sq ft)', price: 30 },
 ];
+
+// Map click handler component
+function MapClickHandler({ setLocation }) {
+  useMapEvents({
+    click: (e) => {
+      setLocation({
+        lat: e.latlng.lat,
+        lng: e.latlng.lng
+      });
+    },
+  });
+  return null;
+}
 
 const Booking = () => {
   const [location, setLocation] = useState(null);
@@ -29,21 +56,10 @@ const Booking = () => {
   const [user, setUser] = useState(null);
   const cartRef = useRef(null);
 
-  const mapStyles = {
-    height: '300px',
-    width: '100%',
-  };
-
+  // Default center coordinates for Nairobi
   const defaultCenter = {
     lat: -1.286389,
-    lng: 36.817223,
-  };
-
-  const handleMapClick = (event) => {
-    setLocation({
-      lat: event.latLng.lat(),
-      lng: event.latLng.lng(),
-    });
+    lng: 36.817223
   };
 
   const scrollToCart = () => {
@@ -84,7 +100,6 @@ const Booking = () => {
       return;
     }
 
-    // Combine all location details into a structured format
     const locationDetails = {
       coordinates: location,
       mainAddress: form.address,
@@ -157,7 +172,6 @@ const Booking = () => {
 
   return (
     <div className="booking relative p-4">
-      {/* Fixed Cart Icon */}
       <div className="fixed bottom-4 right-4 z-50">
         <button 
           onClick={scrollToCart}
@@ -174,22 +188,24 @@ const Booking = () => {
 
       <h1 className="text-2xl font-bold mb-6">Book a Cleaning Service</h1>
 
-      {/* Map Section */}
       <div className="mb-6">
         <h3 className="text-lg font-semibold mb-2">Select Location</h3>
-        <LoadScript googleMapsApiKey="YOUR_API_KEY">
-          <GoogleMap
-            mapContainerStyle={mapStyles}
-            zoom={13}
-            center={defaultCenter}
-            onClick={handleMapClick}
+        <div style={{ height: '300px' }}>
+          <MapContainer 
+            center={defaultCenter} 
+            zoom={13} 
+            style={{ height: '100%', width: '100%' }}
           >
-            {location && <Marker position={location} />}
-          </GoogleMap>
-        </LoadScript>
+            <TileLayer
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            />
+            <MapClickHandler setLocation={setLocation} />
+            {location && <Marker position={[location.lat, location.lng]} />}
+          </MapContainer>
+        </div>
       </div>
 
-      {/* Enhanced Location Details Form */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <h3 className="text-lg font-semibold col-span-full">Location Details</h3>
         
@@ -247,7 +263,6 @@ const Booking = () => {
         </div>
       </div>
 
-      {/* Services Section */}
       <div className="mb-6">
         <h3 className="text-lg font-semibold mb-2">Select Services</h3>
         <div className="space-y-2">
@@ -270,7 +285,6 @@ const Booking = () => {
         </div>
       </div>
 
-      {/* Cart Section */}
       <div className="mb-6" ref={cartRef}>
         <button 
           onClick={() => setShowCart(!showCart)}
@@ -296,7 +310,6 @@ const Booking = () => {
         )}
       </div>
 
-      {/* Submit Button */}
       <button 
         onClick={handleSubmit}
         className="w-full p-3 bg-green-500 text-white rounded font-semibold hover:bg-green-600"
@@ -304,7 +317,6 @@ const Booking = () => {
         Confirm Booking
       </button>
 
-      {/* User Bookings Section */}
       <div className="mt-8">
         {user ? (
           <div>
@@ -341,6 +353,4 @@ const Booking = () => {
 };
 
 export default Booking;
-
-
 
