@@ -54,6 +54,7 @@ const Booking = () => {
   const [showCart, setShowCart] = useState(false);
   const [userBookings, setUserBookings] = useState([]);
   const [user, setUser] = useState(null);
+  const [error, setError] = useState(null);
   const cartRef = useRef(null);
 
   // Default center coordinates for Nairobi
@@ -89,32 +90,35 @@ const Booking = () => {
 
   const handleSubmit = async () => {
     const auth = getAuth();
-
+  
     if (!user) {
       alert('You must be logged in to create a booking.');
       return;
     }
-
-    if (!location || !form.phone || Object.keys(form.cart).length === 0) {
-      alert('Please select a location, provide a phone number, and select services.');
+  
+    if (!form.phone || Object.keys(form.cart).length === 0) {
+      alert('Please provide a phone number and select services.');
       return;
     }
-
-    const locationDetails = {
-      coordinates: location,
-      mainAddress: form.address,
-      details: {
-        houseNumber: form.houseNumber,
-        addressNumber: form.addressNumber,
-        street: form.street,
-        estate: form.estate,
-      }
-    };
-
+  
+    // Proceed even if location is not selected
+    const locationDetails = location
+      ? {
+          coordinates: location,
+          mainAddress: form.address,
+          details: {
+            houseNumber: form.houseNumber,
+            addressNumber: form.addressNumber,
+            street: form.street,
+            estate: form.estate,
+          },
+        }
+      : null;
+  
     try {
       await addDoc(collection(db, 'bookings'), {
         userId: user.uid,
-        location: locationDetails,
+        location: locationDetails,  // Can be null if location is not provided
         phone: form.phone,
         cart: form.cart,
         total: calculateTotal(),
@@ -134,9 +138,10 @@ const Booking = () => {
       fetchUserBookings(user);
     } catch (error) {
       console.error('Error adding booking:', error);
-      alert('Failed to confirm booking.');
+      setError('Failed to confirm booking. Please try again.');
     }
   };
+  
 
   const fetchUserBookings = async (currentUser) => {
     if (!currentUser) return;
@@ -187,6 +192,8 @@ const Booking = () => {
       </div>
 
       <h1 className="text-2xl font-bold mb-6">Book a Cleaning Service</h1>
+
+      {error && <div className="mb-4 text-red-500">{error}</div>}
 
       <div className="mb-6">
         <h3 className="text-lg font-semibold mb-2">Select Location</h3>
@@ -263,94 +270,46 @@ const Booking = () => {
         </div>
       </div>
 
-      <div className="mb-6">
-        <h3 className="text-lg font-semibold mb-2">Select Services</h3>
-        <div className="space-y-2">
-          {servicesList.map((service) => (
-            <div key={service.name} className="flex justify-between items-center p-2 bg-gray-50 rounded">
-              <span>{service.name} - Ksh {service.price}</span>
-              <div className="flex items-center gap-2">
-                <button 
-                  onClick={() => updateCart(service, false)}
-                  className="px-2 py-1 bg-gray-200 rounded"
-                >-</button>
-                <span className="w-8 text-center">{form.cart[service.name]?.quantity || 0}</span>
-                <button 
-                  onClick={() => updateCart(service, true)}
-                  className="px-2 py-1 bg-gray-200 rounded"
-                >+</button>
-              </div>
+      <h3 className="text-lg font-semibold mb-2">Select Services</h3>
+      <div className="space-y-2">
+        {servicesList.map((service) => (
+          <div key={service.name} className="flex justify-between items-center">
+            <span>{service.name}</span>
+            <div className="flex items-center">
+              <button 
+                onClick={() => updateCart(service, true)} 
+                className="bg-blue-500 text-white px-2 py-1 rounded-md mr-2"
+              >
+                Add
+              </button>
+              <button 
+                onClick={() => updateCart(service, false)} 
+                className="bg-red-500 text-white px-2 py-1 rounded-md"
+              >
+                Remove
+              </button>
             </div>
-          ))}
+          </div>
+        ))}
+      </div>
+
+      <div ref={cartRef} className="mt-8">
+        <div className="flex justify-between items-center">
+          <span className="font-semibold">Total</span>
+          <span className="font-semibold text-xl">{calculateTotal()} KES</span>
         </div>
-      </div>
-
-      <div className="mb-6" ref={cartRef}>
-        <button 
-          onClick={() => setShowCart(!showCart)}
-          className="w-full p-2 bg-blue-500 text-white rounded mb-2"
+        <button
+          onClick={handleSubmit}
+          className="mt-4 bg-green-500 text-white py-2 px-4 rounded w-full hover:bg-green-600"
         >
-          {showCart ? 'Hide Cart' : 'View Cart'} ({getTotalItems()} items)
+          Confirm Booking
         </button>
-        {showCart && (
-          <div className="border p-4 rounded">
-            <h3 className="font-semibold mb-2">Cart Summary</h3>
-            <ul className="space-y-2">
-              {Object.entries(form.cart).map(([name, item]) => (
-                <li key={name} className="flex justify-between">
-                  <span>{name}</span>
-                  <span>{item.quantity} x Ksh {item.price} = Ksh {item.quantity * item.price}</span>
-                </li>
-              ))}
-            </ul>
-            <div className="mt-4 pt-2 border-t">
-              <h4 className="font-semibold">Total: Ksh {calculateTotal()}</h4>
-            </div>
-          </div>
-        )}
-      </div>
-
-      <button 
-        onClick={handleSubmit}
-        className="w-full p-3 bg-green-500 text-white rounded font-semibold hover:bg-green-600"
-      >
-        Confirm Booking
-      </button>
-
-      <div className="mt-8">
-        {user ? (
-          <div>
-            <h3 className="text-lg font-semibold mb-4">Your Bookings</h3>
-            {userBookings.length > 0 ? (
-              <div className="space-y-4">
-                {userBookings.map((booking) => (
-                  <div key={booking.id} className="border p-4 rounded">
-                    <p><strong>Address:</strong> {booking.location.mainAddress}</p>
-                    {booking.location.details.houseNumber && (
-                      <p><strong>House Number:</strong> {booking.location.details.houseNumber}</p>
-                    )}
-                    {booking.location.details.street && (
-                      <p><strong>Street:</strong> {booking.location.details.street}</p>
-                    )}
-                    {booking.location.details.estate && (
-                      <p><strong>Estate:</strong> {booking.location.details.estate}</p>
-                    )}
-                    <p><strong>Total:</strong> Ksh {booking.total}</p>
-                    <p><strong>Created At:</strong> {new Date(booking.createdAt.seconds * 1000).toLocaleString()}</p>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-gray-500">No bookings found.</p>
-            )}
-          </div>
-        ) : (
-          <p className="text-gray-500">Please log in to view your bookings.</p>
-        )}
       </div>
     </div>
   );
 };
 
 export default Booking;
+
+
 
