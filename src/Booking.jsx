@@ -5,6 +5,7 @@ import { addDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { ShoppingCart } from 'lucide-react';
 import { auth, db } from './Firebase';
 import L from 'leaflet';
+import './Booking.css'
 import 'leaflet/dist/leaflet.css';
 import icon from 'leaflet/dist/images/marker-icon.png';
 import iconShadow from 'leaflet/dist/images/marker-shadow.png';
