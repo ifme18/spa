@@ -1,35 +1,74 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { getAuth } from 'firebase/auth';
 import { addDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { ShoppingCart } from 'lucide-react';
 import { auth, db } from './Firebase';
 import L from 'leaflet';
-import './Booking.css'
 import 'leaflet/dist/leaflet.css';
 import icon from 'leaflet/dist/images/marker-icon.png';
 import iconShadow from 'leaflet/dist/images/marker-shadow.png';
 
-// Fix for default marker icon
-let DefaultIcon = L.icon({
-    iconUrl: icon,
-    shadowUrl: iconShadow,
-    iconSize: [25, 41],
-    iconAnchor: [12, 41]
+// Default marker icon setup
+const DefaultIcon = L.icon({
+  iconUrl: icon,
+  shadowUrl: iconShadow,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41]
 });
 
 L.Marker.prototype.options.icon = DefaultIcon;
 
-const servicesList = [
-  { name: 'Normal Car Wash', price: 300 },
-  { name: 'Engine Wash', price: 300 },
-  { name: 'Underwash', price: 500 },
-  { name: 'Seat Cleaning (per seat)', price: 500 },
-  { name: 'Carpet Cleaning (per sq ft)', price: 30 },
+// Services data
+const SERVICES = [
+  { id: 1, name: 'Normal Car Wash', price: 300, description: 'Exterior wash and basic interior cleaning' },
+  { id: 2, name: 'Engine Wash', price: 300, description: 'Thorough engine bay cleaning and degreasing' },
+  { id: 3, name: 'Underwash', price: 500, description: 'Complete undercarriage cleaning and protection' },
+  { id: 4, name: 'Seat Cleaning', price: 500, description: 'Deep cleaning per seat, includes stain removal' },
+  { id: 5, name: 'Carpet Cleaning', price: 30, description: 'Deep carpet cleaning per square foot' },
 ];
 
+// Location input component
+const LocationInput = ({ label, placeholder, value, onChange, required = false }) => (
+  <div className="input-container">
+    <label className="input-label">{label}</label>
+    <input
+      type="text"
+      className="input-field"
+      placeholder={placeholder}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      required={required}
+    />
+  </div>
+);
+
+// Service card component
+const ServiceCard = ({ service, quantity, onAdd, onRemove }) => (
+  <div className="service-item">
+    <div className="service-info">
+      <h4 className="service-name">{service.name}</h4>
+      <p className="service-description">{service.description}</p>
+      <p className="service-price">KES {service.price}</p>
+    </div>
+    <div className="service-actions">
+      {quantity > 0 && (
+        <span className="service-quantity">{quantity}</span>
+      )}
+      <button onClick={() => onAdd(service)} className="btn-service btn-add">
+        Add
+      </button>
+      {quantity > 0 && (
+        <button onClick={() => onRemove(service)} className="btn-service btn-remove">
+          Remove
+        </button>
+      )}
+    </div>
+  </div>
+);
+
 // Map click handler component
-function MapClickHandler({ setLocation }) {
+const MapClickHandler = ({ setLocation }) => {
   useMapEvents({
     click: (e) => {
       setLocation({
@@ -39,8 +78,9 @@ function MapClickHandler({ setLocation }) {
     },
   });
   return null;
-}
+};
 
+// Main booking component
 const Booking = () => {
   const [location, setLocation] = useState(null);
   const [form, setForm] = useState({
@@ -53,58 +93,75 @@ const Booking = () => {
     cart: {},
   });
   const [showCart, setShowCart] = useState(false);
-  const [userBookings, setUserBookings] = useState([]);
   const [user, setUser] = useState(null);
   const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
   const cartRef = useRef(null);
 
-  // Default center coordinates for Nairobi
-  const defaultCenter = {
-    lat: -1.286389,
-    lng: 36.817223
-  };
+  const defaultCenter = { lat: -1.286389, lng: 36.817223 }; // Nairobi center
 
-  const scrollToCart = () => {
-    setShowCart(true);
-    cartRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  useEffect(() => {
+    const auth = getAuth();
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setUser(user);
+      if (user) fetchUserBookings(user);
+    });
+    return () => unsubscribe();
+  }, []);
 
-  const updateCart = (service, increment = true) => {
-    setForm((prev) => {
+  const handleAddService = (service) => {
+    setForm(prev => {
       const newCart = { ...prev.cart };
-      if (!newCart[service.name]) newCart[service.name] = { price: service.price, quantity: 0 };
-
-      newCart[service.name].quantity += increment ? 1 : -1;
-      if (newCart[service.name].quantity <= 0) delete newCart[service.name];
-
+      if (!newCart[service.id]) {
+        newCart[service.id] = { 
+          name: service.name, 
+          price: service.price, 
+          quantity: 0 
+        };
+      }
+      newCart[service.id].quantity += 1;
       return { ...prev, cart: newCart };
     });
   };
 
-  const calculateTotal = () => {
-    return Object.values(form.cart).reduce((acc, item) => acc + item.price * item.quantity, 0);
+  const handleRemoveService = (service) => {
+    setForm(prev => {
+      const newCart = { ...prev.cart };
+      if (newCart[service.id]) {
+        newCart[service.id].quantity -= 1;
+        if (newCart[service.id].quantity <= 0) {
+          delete newCart[service.id];
+        }
+      }
+      return { ...prev, cart: newCart };
+    });
   };
 
-  const getTotalItems = () => {
-    return Object.values(form.cart).reduce((acc, item) => acc + item.quantity, 0);
-  };
+  const calculateTotal = () => 
+    Object.values(form.cart).reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
-  const handleSubmit = async () => {
-    const auth = getAuth();
-  
+  const getTotalItems = () => 
+    Object.values(form.cart).reduce((sum, item) => sum + item.quantity, 0);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     if (!user) {
-      alert('You must be logged in to create a booking.');
+      setError('Please log in to create a booking.');
       return;
     }
-  
+
     if (!form.phone || Object.keys(form.cart).length === 0) {
-      alert('Please provide a phone number and select services.');
+      setError('Please provide a phone number and select at least one service.');
       return;
     }
-  
-    // Proceed even if location is not selected
-    const locationDetails = location
-      ? {
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      await addDoc(collection(db, 'bookings'), {
+        userId: user.uid,
+        location: location ? {
           coordinates: location,
           mainAddress: form.address,
           details: {
@@ -113,19 +170,14 @@ const Booking = () => {
             street: form.street,
             estate: form.estate,
           },
-        }
-      : null;
-  
-    try {
-      await addDoc(collection(db, 'bookings'), {
-        userId: user.uid,
-        location: locationDetails,  // Can be null if location is not provided
+        } : null,
         phone: form.phone,
         cart: form.cart,
         total: calculateTotal(),
         createdAt: new Date(),
+        status: 'pending'
       });
-      alert('Booking confirmed!');
+
       setForm({
         address: '',
         phone: '',
@@ -136,181 +188,147 @@ const Booking = () => {
         cart: {},
       });
       setLocation(null);
-      fetchUserBookings(user);
-    } catch (error) {
-      console.error('Error adding booking:', error);
-      setError('Failed to confirm booking. Please try again.');
+      setShowCart(false);
+      
+      // Show success message
+      alert('Booking confirmed successfully!');
+    } catch (err) {
+      setError('Failed to create booking. Please try again.');
+      console.error('Booking error:', err);
+    } finally {
+      setLoading(false);
     }
   };
-  
-
-  const fetchUserBookings = async (currentUser) => {
-    if (!currentUser) return;
-
-    try {
-      const q = query(collection(db, 'bookings'), where('userId', '==', currentUser.uid));
-      const querySnapshot = await getDocs(q);
-      const bookings = [];
-      querySnapshot.forEach((doc) => {
-        bookings.push({ id: doc.id, ...doc.data() });
-      });
-      setUserBookings(bookings);
-    } catch (error) {
-      console.error('Error fetching bookings:', error);
-      alert('Failed to fetch your bookings.');
-    }
-  };
-
-  useEffect(() => {
-    const auth = getAuth();
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      if (currentUser) {
-        setUser(currentUser);
-        fetchUserBookings(currentUser);
-      } else {
-        setUser(null);
-        setUserBookings([]);
-      }
-    });
-
-    return () => unsubscribe();
-  }, []);
 
   return (
-    <div className="booking relative p-4">
-      <div className="fixed bottom-4 right-4 z-50">
+    <div className="booking">
+      <header className="booking-header">
+        <h1>Premium Car Wash Services</h1>
+        <p className="header-subtitle">Professional cleaning for your vehicle</p>
+      </header>
+
+      {error && (
+        <div className="error-message">
+          {error}
+        </div>
+      )}
+
+      <div className="booking-container">
+        <section className="location-section">
+          <h2>Select Location</h2>
+          <div className="map-container">
+            <MapContainer
+              center={defaultCenter}
+              zoom={13}
+              style={{ height: '400px' }}
+            >
+              <TileLayer
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                attribution='&copy; OpenStreetMap contributors'
+              />
+              <MapClickHandler setLocation={setLocation} />
+              {location && <Marker position={[location.lat, location.lng]} />}
+            </MapContainer>
+          </div>
+
+          <div className="location-details">
+            <h3>Location Details</h3>
+            <form className="location-form">
+              <LocationInput
+                label="Main Address"
+                placeholder="Enter your main address"
+                value={form.address}
+                onChange={(value) => setForm(prev => ({ ...prev, address: value }))}
+              />
+              <LocationInput
+                label="House Number"
+                placeholder="Enter house number"
+                value={form.houseNumber}
+                onChange={(value) => setForm(prev => ({ ...prev, houseNumber: value }))}
+              />
+              <LocationInput
+                label="Address Number"
+                placeholder="Enter address number"
+                value={form.addressNumber}
+                onChange={(value) => setForm(prev => ({ ...prev, addressNumber: value }))}
+              />
+              <LocationInput
+                label="Street Name"
+                placeholder="Enter street name"
+                value={form.street}
+                onChange={(value) => setForm(prev => ({ ...prev, street: value }))}
+              />
+              <LocationInput
+                label="Estate Name"
+                placeholder="Enter estate name"
+                value={form.estate}
+                onChange={(value) => setForm(prev => ({ ...prev, estate: value }))}
+              />
+              <LocationInput
+                label="Phone Number *"
+                placeholder="Enter your phone number"
+                value={form.phone}
+                onChange={(value) => setForm(prev => ({ ...prev, phone: value }))}
+                required
+              />
+            </form>
+          </div>
+        </section>
+
+        <section className="services-section">
+          <h2>Our Services</h2>
+          <div className="services-container">
+            {SERVICES.map(service => (
+              <ServiceCard
+                key={service.id}
+                service={service}
+                quantity={form.cart[service.id]?.quantity || 0}
+                onAdd={handleAddService}
+                onRemove={handleRemoveService}
+              />
+            ))}
+          </div>
+        </section>
+
         <button 
-          onClick={scrollToCart}
-          className="bg-blue-500 text-white p-3 rounded-full shadow-lg flex items-center justify-center hover:bg-blue-600 transition-colors"
+          className="cart-button"
+          onClick={() => setShowCart(!showCart)}
         >
-          <ShoppingCart className="w-6 h-6" />
+          <ShoppingCart size={24} />
           {getTotalItems() > 0 && (
-            <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-              {getTotalItems()}
-            </span>
+            <span className="cart-count">{getTotalItems()}</span>
           )}
         </button>
-      </div>
 
-      <h1 className="text-2xl font-bold mb-6">Book a Cleaning Service</h1>
-
-      {error && <div className="mb-4 text-red-500">{error}</div>}
-
-      <div className="mb-6">
-        <h3 className="text-lg font-semibold mb-2">Select Location</h3>
-        <div style={{ height: '300px' }}>
-          <MapContainer 
-            center={defaultCenter} 
-            zoom={13} 
-            style={{ height: '100%', width: '100%' }}
-          >
-            <TileLayer
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            />
-            <MapClickHandler setLocation={setLocation} />
-            {location && <Marker position={[location.lat, location.lng]} />}
-          </MapContainer>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        <h3 className="text-lg font-semibold col-span-full">Location Details</h3>
-        
-        <div className="space-y-4">
-          <input
-            type="text"
-            placeholder="Main Address"
-            value={form.address}
-            onChange={(e) => setForm({ ...form, address: e.target.value })}
-            className="w-full p-2 border rounded"
-          />
-          
-          <input
-            type="text"
-            placeholder="House Number (optional)"
-            value={form.houseNumber}
-            onChange={(e) => setForm({ ...form, houseNumber: e.target.value })}
-            className="w-full p-2 border rounded"
-          />
-
-          <input
-            type="text"
-            placeholder="Address Number (optional)"
-            value={form.addressNumber}
-            onChange={(e) => setForm({ ...form, addressNumber: e.target.value })}
-            className="w-full p-2 border rounded"
-          />
-        </div>
-
-        <div className="space-y-4">
-          <input
-            type="text"
-            placeholder="Street Name (optional)"
-            value={form.street}
-            onChange={(e) => setForm({ ...form, street: e.target.value })}
-            className="w-full p-2 border rounded"
-          />
-
-          <input
-            type="text"
-            placeholder="Estate Name (optional)"
-            value={form.estate}
-            onChange={(e) => setForm({ ...form, estate: e.target.value })}
-            className="w-full p-2 border rounded"
-          />
-
-          <input
-            type="tel"
-            placeholder="Phone Number *"
-            value={form.phone}
-            onChange={(e) => setForm({ ...form, phone: e.target.value })}
-            className="w-full p-2 border rounded"
-            required
-          />
-        </div>
-      </div>
-
-      <h3 className="text-lg font-semibold mb-2">Select Services</h3>
-      <div className="space-y-2">
-        {servicesList.map((service) => (
-          <div key={service.name} className="flex justify-between items-center">
-            <span>{service.name}</span>
-            <div className="flex items-center">
-              <button 
-                onClick={() => updateCart(service, true)} 
-                className="bg-blue-500 text-white px-2 py-1 rounded-md mr-2"
-              >
-                Add
-              </button>
-              <button 
-                onClick={() => updateCart(service, false)} 
-                className="bg-red-500 text-white px-2 py-1 rounded-md"
-              >
-                Remove
-              </button>
+        {showCart && (
+          <div className="cart-summary" ref={cartRef}>
+            <h3>Order Summary</h3>
+            <div className="cart-items">
+              {Object.values(form.cart).map(item => (
+                <div key={item.name} className="cart-item">
+                  <span>{item.name} x {item.quantity}</span>
+                  <span>KES {item.price * item.quantity}</span>
+                </div>
+              ))}
             </div>
+            <div className="total-section">
+              <span className="total-label">Total Amount</span>
+              <span className="total-amount">KES {calculateTotal()}</span>
+            </div>
+            <button
+              className="btn-confirm"
+              onClick={handleSubmit}
+              disabled={loading}
+            >
+              {loading ? 'Processing...' : 'Confirm Booking'}
+            </button>
           </div>
-        ))}
-      </div>
-
-      <div ref={cartRef} className="mt-8">
-        <div className="flex justify-between items-center">
-          <span className="font-semibold">Total</span>
-          <span className="font-semibold text-xl">{calculateTotal()} KES</span>
-        </div>
-        <button
-          onClick={handleSubmit}
-          className="mt-4 bg-green-500 text-white py-2 px-4 rounded w-full hover:bg-green-600"
-        >
-          Confirm Booking
-        </button>
+        )}
       </div>
     </div>
   );
 };
 
 export default Booking;
-
 
 
