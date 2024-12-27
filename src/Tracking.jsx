@@ -1,27 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
-import { Clock, CheckCircle, AlertCircle, Loader } from 'lucide-react';
 import { db } from './Firebase';
-import './Tracking.css'; // Import the CSS file
+import { Clock, CheckCircle, AlertCircle, Loader } from 'lucide-react';
+import './Tracking.css';
 
 // ✅ STATUS CONFIGURATION
 const STATUS_CONFIG = {
-  pending: {
-    color: 'bg-yellow',
-    icon: Clock,
-    label: 'Pending'
-  },
-  completed: {
-    color: 'bg-green',
-    icon: CheckCircle,
-    label: 'Completed'
-  },
-  cancelled: {
-    color: 'bg-red',
-    icon: AlertCircle,
-    label: 'Cancelled'
-  }
+  Pending: { color: 'bg-yellow-200', icon: Clock, label: 'Pending' },
+  Washing: { color: 'bg-blue-300', icon: Clock, label: 'Washing' },
+  Drying: { color: 'bg-purple-300', icon: Clock, label: 'Drying' },
+  Completed: { color: 'bg-green-400', icon: CheckCircle, label: 'Completed' }
 };
 
 // ✅ FORMAT DATE FUNCTION
@@ -34,56 +23,24 @@ const formatDate = (timestamp) => {
   }).format(date);
 };
 
-// ✅ BOOKING CARD COMPONENT
-const BookingCard = ({ booking }) => {
-  const status = booking.status || 'pending';
+// ✅ SERVICE STATUS TRACKER COMPONENT
+const ServiceStatusTracker = ({ serviceName, status }) => {
   const StatusIcon = STATUS_CONFIG[status]?.icon || Clock;
 
   return (
-    <div className="booking-card">
-      <div className="booking-header">
-        <h3 className="booking-title">Booking #{booking.id.slice(-6)}</h3>
-        <div className={`status-badge ${STATUS_CONFIG[status]?.color}`}>
-          <StatusIcon size={16} />
-          <span>{STATUS_CONFIG[status]?.label}</span>
-        </div>
+    <div className="service-status-tracker">
+      <h4 className="service-title">{serviceName}</h4>
+      <div className={`status-badge ${STATUS_CONFIG[status]?.color}`}>
+        <StatusIcon size={18} />
+        <span>{STATUS_CONFIG[status]?.label}</span>
       </div>
-
-      <div className="booking-details">
-        <div className="detail-row">
-          <span className="detail-label">Booked On:</span>
-          <span className="detail-value">{formatDate(booking.createdAt)}</span>
-        </div>
-
-        <div className="detail-row">
-          <span className="detail-label">Total Amount:</span>
-          <span className="detail-value">KES {booking.total}</span>
-        </div>
-
-        {booking.location && (
-          <div className="detail-row">
-            <span className="detail-label">Location:</span>
-            <span className="detail-value">{booking.location.mainAddress}</span>
+      <div className="progress-steps">
+        {['Pending', 'Washing', 'Drying', 'Completed'].map((step) => (
+          <div key={step} className={`progress-step ${step === status ? 'active' : ''}`}>
+            <div className="step-dot" />
+            <span>{step}</span>
           </div>
-        )}
-      </div>
-
-      {/* PROCESS FLOW */}
-      <div className="process-flow">
-        <div className="process-step">
-          <div className={`step-dot ${status === 'pending' ? 'active' : ''}`} />
-          <span>Pending</span>
-        </div>
-        <div className="step-arrow">→</div>
-        <div className="process-step">
-          <div className={`step-dot ${status === 'completed' ? 'active' : ''}`} />
-          <span>Completed</span>
-        </div>
-        <div className="step-arrow">→</div>
-        <div className="process-step">
-          <div className={`step-dot ${status === 'cancelled' ? 'active' : ''}`} />
-          <span>Cancelled</span>
-        </div>
+        ))}
       </div>
     </div>
   );
@@ -98,18 +55,13 @@ const Tracking = () => {
 
   const fetchUserBookings = async (userId) => {
     try {
-      const q = query(
-        collection(db, 'bookings'),
-        where('userId', '==', userId),
-        orderBy('createdAt', 'desc')
-      );
-
+      const q = query(collection(db, 'bookings'), where('userId', '==', userId));
       const querySnapshot = await getDocs(q);
-      const fetchedBookings = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data()
-      }));
 
+      const fetchedBookings = [];
+      querySnapshot.forEach((doc) => {
+        fetchedBookings.push({ id: doc.id, ...doc.data() });
+      });
       setBookings(fetchedBookings);
     } catch (error) {
       console.error('Error fetching bookings:', error.message);
@@ -137,7 +89,7 @@ const Tracking = () => {
   if (loading) {
     return (
       <div className="loading-state">
-        <Loader className="animate-spin" size={24} />
+        <Loader className="animate-spin text-blue-500" size={28} />
         <p>Loading your bookings...</p>
       </div>
     );
@@ -146,7 +98,7 @@ const Tracking = () => {
   if (!user) {
     return (
       <div className="auth-required">
-        <AlertCircle size={24} />
+        <AlertCircle size={28} className="text-red-500" />
         <p>Please log in to view your bookings.</p>
       </div>
     );
@@ -155,15 +107,12 @@ const Tracking = () => {
   return (
     <div className="tracking-container">
       <header className="tracking-header">
-        <h1>Your Bookings</h1>
-        <p className="booking-count">
-          {bookings.length} {bookings.length === 1 ? 'booking' : 'bookings'} found
-        </p>
+        <h1>Your Booking Status</h1>
       </header>
 
       {error && (
         <div className="error-message">
-          <AlertCircle size={16} />
+          <AlertCircle size={20} className="text-red-500" />
           <span>{error}</span>
         </div>
       )}
@@ -175,7 +124,22 @@ const Tracking = () => {
       ) : (
         <div className="bookings-list">
           {bookings.map((booking) => (
-            <BookingCard key={booking.id} booking={booking} />
+            <div key={booking.id} className="booking-card shadow-md">
+              <h3 className="booking-id">Booking ID: {booking.id}</h3>
+              <p><strong>Phone:</strong> {booking.phone}</p>
+              <p><strong>Booked On:</strong> {formatDate(booking.createdAt)}</p>
+              
+              <div className="service-tracking">
+                {booking.cart &&
+                  Object.entries(booking.cart).map(([serviceName, serviceDetails]) => (
+                    <ServiceStatusTracker
+                      key={serviceName}
+                      serviceName={serviceName}
+                      status={serviceDetails.status || 'Pending'}
+                    />
+                  ))}
+              </div>
+            </div>
           ))}
         </div>
       )}
@@ -184,5 +148,7 @@ const Tracking = () => {
 };
 
 export default Tracking;
+
+
 
 
