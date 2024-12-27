@@ -1,95 +1,163 @@
-.tracking {
+/* ✅ General Tracking Container */
+.tracking-container {
     max-width: 800px;
-    margin: 0 auto;
+    margin: 20px auto;
     padding: 20px;
-    background-color: #f9f9f9;
-    border-radius: 10px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-.tracking h1 {
-    color: #333;
-    text-align: center;
-    margin-bottom: 15px;
-    font-size: 24px;
-}
-
-.tracking p {
-    color: #666;
+    font-family: Arial, sans-serif;
+    background: #f9fafc;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* ✅ Header Styling */
+  .tracking-header {
     text-align: center;
     margin-bottom: 20px;
-    line-height: 1.6;
-}
-
-.tracking-map-container {
+  }
+  
+  .tracking-header h1 {
+    font-size: 1.8rem;
+    margin-bottom: 8px;
+  }
+  
+  .booking-count {
+    font-size: 0.9rem;
+    color: #666;
+  }
+  
+  /* ✅ Loading & Error States */
+  .loading-state, .auth-required, .no-bookings, .error-message {
+    text-align: center;
+    padding: 20px;
+    font-size: 1rem;
+    color: #555;
+  }
+  
+  /* ✅ Booking Card Styling */
+  .booking-card {
+    background: #fff;
     border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-}
-
-.stages-container {
-    background-color: #fff;
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
+    margin-bottom: 20px;
     padding: 15px;
-    margin-top: 15px;
-}
-
-.stages-container h4 {
-    color: #333;
-    margin-bottom: 10px;
-    border-bottom: 2px solid #f0f0f0;
-    padding-bottom: 5px;
-}
-
-.stage-item {
+    border: 1px solid #ddd;
+  }
+  
+  .booking-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  
+  .booking-title {
+    font-weight: bold;
+    font-size: 1.1rem;
+  }
+  
+  .status-badge {
     display: flex;
     align-items: center;
-    margin-bottom: 10px;
-    padding: 10px;
-    background-color: #f9f9f9;
-    border-radius: 5px;
-    transition: background-color 0.3s ease;
-}
-
-.stage-item:hover {
-    background-color: #f0f0f0;
-}
-
-.stage-status-dot {
-    width: 16px;
-    height: 16px;
+    padding: 4px 8px;
+    font-size: 0.8rem;
+    border-radius: 12px;
+    gap: 4px;
+  }
+  
+  .booking-details .detail-row {
+    display: flex;
+    justify-content: space-between;
+    margin: 6px 0;
+    font-size: 0.9rem;
+  }
+  
+  .services-list {
+    margin-top: 12px;
+  }
+  
+  .services-title {
+    font-weight: bold;
+    margin-bottom: 6px;
+  }
+  
+  .service-item {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+  }
+  
+  /* ✅ Stepper Process Styling */
+  .booking-process {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 20px 0;
+    position: relative;
+  }
+  
+  .booking-process::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 10%;
+    right: 10%;
+    height: 2px;
+    background: #ccc;
+    z-index: 0;
+  }
+  
+  .step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    z-index: 1;
+    position: relative;
+  }
+  
+  .step .dot {
+    width: 24px;
+    height: 24px;
     border-radius: 50%;
-    margin-right: 10px;
-    display: inline-block;
-}
-
-.stage-status-completed {
-    background-color: #4CAF50;
-    opacity: 1;
-}
-
-.stage-status-pending {
-    background-color: #FFC107;
-    opacity: 0.6;
-}
-
-.stage-timestamp {
-    margin-left: auto;
-    font-size: 12px;
-    color: #666;
-}
-
-@media (max-width: 600px) {
-    .tracking {
-        padding: 10px;
+    background: #ddd;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 0.8rem;
+    font-weight: bold;
+    color: #fff;
+  }
+  
+  .step.completed .dot {
+    background: #4caf50;
+  }
+  
+  .step.pending .dot {
+    background: #ff9800;
+  }
+  
+  .step.cancelled .dot {
+    background: #f44336;
+  }
+  
+  .step-label {
+    margin-top: 6px;
+    font-size: 0.85rem;
+    text-align: center;
+    max-width: 80px;
+  }
+  
+  /* ✅ Responsive Design */
+  @media (max-width: 600px) {
+    .booking-card {
+      font-size: 0.9rem;
     }
-
-    .tracking h1 {
-        font-size: 20px;
+  
+    .step .dot {
+      width: 20px;
+      height: 20px;
     }
-
-    .stages-container {
-        padding: 10px;
+  
+    .step-label {
+      font-size: 0.75rem;
     }
-}
+  }
+  
